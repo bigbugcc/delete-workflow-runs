@@ -88,7 +88,7 @@ async function run() {
         console.log(`🚀 Delete workflow run ${run_id}`);
       });
 
-      console.log(`✅ ${arr_length} workflow runs are deleted.`);
+      console.log(`✅ ${del_runs.length} workflow runs are deleted.`);
     }
   }
   catch (error) {
