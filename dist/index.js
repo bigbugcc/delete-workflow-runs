@@ -4,7 +4,9 @@ async function run() {
     // Fetch all the inputs
     const token = core.getInput('token');
     const repository = core.getInput('repository');
-    const retain_days = core.getInput('retain_days');
+    //const retain_days = core.getInput('retain_days');
+    
+    //每个不同的workflow保留的最小运行数
     const keep_minimum_runs = core.getInput('keep_minimum_runs');
     
     // Split the input 'repository' (format {owner}/{repo}) to be {owner} and {repo}
@@ -35,14 +37,32 @@ async function run() {
         break;
       }
       else {
-        for (index = 0; index < lenght; index++) {
-          var created_at = new Date(response.data.workflow_runs[index].created_at);
-          var current = new Date();
-          var ELAPSE_ms = current.getTime() - created_at.getTime();
-          var ELAPSE_days = ELAPSE_ms / (1000 * 3600 * 24);
-          
-          if (ELAPSE_days >= retain_days) {
-            del_runs.push(response.data.workflow_runs[index].id);
+        var workflows = response.data.workflow_runs;
+        //根据workflow_id分组
+        const groupedWorkflows = workflows.reduce((groups, workflow) => {
+          const workflowId = workflow.workflow_id;
+          if (!groups[workflowId]) {
+            groups[workflowId] = [];
+          }
+          groups[workflowId].push(workflow);
+          return groups;
+        }, {});
+
+        //根据时间降序排序
+        for (const key in groupedWorkflows) {
+          groupedWorkflows[key].sort((a, b) => {
+            return new Date(b.created_at) - new Date(a.created_at);
+          });
+        }
+
+        //根据分组后的数据保留最新的keep_minimum_runs个workflow，其它的删除
+        for (const key in groupedWorkflows) {
+          const group = groupedWorkflows[key];
+          if (group.length > keep_minimum_runs) {
+            const deleteGroup = group.slice(keep_minimum_runs);
+            deleteGroup.forEach(item => {
+              del_runs.push(item.id);
+            });
           }
         }
       }
@@ -58,9 +78,8 @@ async function run() {
       console.log(`No workflow runs need to be deleted.`);
     }
     else {
-      for (index = 0; index < arr_length; index++) {
+      del_runs.forEach(async (run_id) => {
         // Execute the API "Delete a workflow run", see 'https://octokit.github.io/rest.js/v18#actions-delete-workflow-run'
-        const run_id = del_runs[index];
         await octokit.actions.deleteWorkflowRun({
           owner: repo_owner,
           repo: repo_name,
@@ -68,7 +87,7 @@ async function run() {
         });
 
         console.log(`🚀 Delete workflow run ${run_id}`);
-      }
+      });
 
       console.log(`✅ ${arr_length} workflow runs are deleted.`);
     }
