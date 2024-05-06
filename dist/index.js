@@ -73,8 +73,7 @@ async function run() {
       page_number++;
     }
 
-    const arr_length = del_runs.length - keep_minimum_runs;
-    if (arr_length < 1) {
+    if (del_runs.length < 1) {
       console.log(`No workflow runs need to be deleted.`);
     }
     else {
