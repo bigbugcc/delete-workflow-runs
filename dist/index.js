@@ -17,7 +17,6 @@ async function run() {
     const repo_owner = splitRepository[0];
     const repo_name = splitRepository[1];
     
-    var page_number = 1;
     var del_runs = new Array();
     const { Octokit } = require("@octokit/rest");
     const octokit = new Octokit({ auth: token });
@@ -26,9 +25,7 @@ async function run() {
       // Execute the API "List workflow runs for a repository", see 'https://octokit.github.io/rest.js/v18#actions-list-workflow-runs-for-repo'     
       const response = await octokit.actions.listWorkflowRunsForRepo({
         owner: repo_owner,
-        repo: repo_name,
-        per_page: 100,
-        page: page_number
+        repo: repo_name
       });
       
       const lenght = response.data.workflow_runs.length;
@@ -70,7 +67,6 @@ async function run() {
       if (lenght < 100) {
         break;
       }
-      page_number++;
     }
 
     if (del_runs.length < 1) {
