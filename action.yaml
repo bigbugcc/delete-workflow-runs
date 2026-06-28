@@ -14,12 +14,12 @@ inputs:
     default: ${{ github.repository }}
 
   keep_minimum_runs:
-    description: 'The Each workflow runs minimally to retain.'
+    description: 'The minimum number of workflow runs to retain for each workflow.'
     required: true
-    default: 3
+    default: '3'
 
 runs:
-  using: 'node12'
+  using: 'node24'
   main: 'dist/index.js'
 
 branding:
